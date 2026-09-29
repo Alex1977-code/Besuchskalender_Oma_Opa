@@ -8,7 +8,7 @@ const crypto = require('crypto');
 const PORT = process.env.PORT || 8080;
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
 const ROOT = __dirname;
-const STATIC = new Set(['/index.html', '/manifest.webmanifest', '/sw.js']);
+const STATIC = new Set(['/index.html', '/manifest.webmanifest', '/sw.js', '/config.js']);
 const TYPES = { '.html': 'text/html; charset=utf-8', '.webmanifest': 'application/manifest+json', '.js': 'text/javascript' };
 const MAX_BODY = 1024 * 1024;
 const TOMBSTONE_TTL = 90 * 24 * 3600 * 1000;

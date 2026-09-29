@@ -11,6 +11,16 @@ Alle Familienmitglieder geben in der App denselben **Familien-Code** ein (mind. 
 - Konflikte: Der zuletzt geänderte Eintrag gewinnt; Löschungen werden mit abgeglichen.
 - Der Code ist das einzige „Passwort“: lang und nur in der Familie teilen; für den Betrieb im Internet HTTPS davorschalten.
 
+## Familienkalender ohne eigenen Server (Supabase + GitHub Pages)
+1. Auf [supabase.com](https://supabase.com) ein kostenloses Projekt anlegen.
+2. **SQL Editor** → Inhalt von `supabase/schema.sql` einfügen → **Run**.
+3. **Project Settings → API**: `Project URL` und `anon public` key in `config.js` eintragen.
+   (Der anon key ist öffentlich gedacht. Die Tabelle ist gesperrt; Zugriff gibt es nur über die Funktion `sync_visits` mit dem Familien-Code.)
+4. App hosten: GitHub → **Settings → Pages** → Branch wählen, Ordner `/ (root)`. Die Adresse an die Familie schicken.
+5. Alle geben in der App denselben Familien-Code ein.
+
+Ist `config.js` leer, nutzt die App `server.js` (siehe oben) oder bleibt rein lokal.
+
 ## Plan
 
 | Phase | Aufgabe | Ergebnis | KI-Modell |

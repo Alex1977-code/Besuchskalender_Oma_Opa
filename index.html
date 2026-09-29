@@ -107,6 +107,7 @@
   </form>
 </dialog>
 
+<script src="config.js"></script>
 <script>
 const KEY = 'besuchskalender.v1';
 const COLORS = ['#2f6f4f','#e8a33d','#3b78c2','#b3402f','#8a5cc2','#1f9aa8'];
@@ -199,11 +200,17 @@ async function sync() {
   if (syncing) { again = true; return; }
   syncing = true;
   try {
-    const r = await fetch('/api/sync', { method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Family-Code': code },
-      body: JSON.stringify({ visits }) });
-    if (!r.ok) throw new Error(r.status === 400 ? 'Code ungültig' : 'Serverfehler ' + r.status);
-    const data = await r.json();
+    const sb = window.SUPABASE || {};
+    const r = sb.url && sb.key
+      ? await fetch(sb.url.replace(/\/$/, '') + '/rest/v1/rpc/sync_visits', { method: 'POST',
+          headers: { 'Content-Type': 'application/json', apikey: sb.key, Authorization: 'Bearer ' + sb.key },
+          body: JSON.stringify({ p_code: code, p_visits: visits }) })
+      : await fetch('/api/sync', { method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Family-Code': code },
+          body: JSON.stringify({ visits }) });
+    if (!r.ok) throw new Error(r.status === 400 ? 'Code ungültig' : 'Fehler ' + r.status);
+    const json = await r.json();
+    const data = { visits: Array.isArray(json) ? json : json.visits };
     const m = new Map();
     for (const v of [...data.visits, ...visits]) if (!m.has(v.id) || m.get(v.id).updatedAt < v.updatedAt) m.set(v.id, v);
     visits = [...m.values()]; save(); render();
