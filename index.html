@@ -203,7 +203,7 @@ async function sync() {
     const sb = window.SUPABASE || {};
     const r = sb.url && sb.key
       ? await fetch(sb.url.replace(/\/$/, '') + '/rest/v1/rpc/sync_visits', { method: 'POST',
-          headers: { 'Content-Type': 'application/json', apikey: sb.key, Authorization: 'Bearer ' + sb.key },
+          headers: { 'Content-Type': 'application/json', apikey: sb.key, ...(sb.key.startsWith('eyJ') ? { Authorization: 'Bearer ' + sb.key } : {}) },
           body: JSON.stringify({ p_code: code, p_visits: visits }) })
       : await fetch('/api/sync', { method: 'POST',
           headers: { 'Content-Type': 'application/json', 'X-Family-Code': code },
