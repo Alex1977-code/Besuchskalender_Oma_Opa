@@ -275,7 +275,17 @@ $('family').open = !code;
 updateSyncUi(); sync();
 
 render();
-if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+if ('serviceWorker' in navigator) {
+  // Wurde eine neue App-Version aktiviert, Seite einmal neu laden
+  const hadController = !!navigator.serviceWorker.controller;
+  let reloaded = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (hadController && !reloaded && !$('dlg').open) { reloaded = true; location.reload(); }
+  });
+  navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' })
+    .then(r => { r.update(); document.addEventListener('visibilitychange', () => { if (!document.hidden) r.update(); }); })
+    .catch(() => {});
+}
 </script>
 </body>
 </html>
