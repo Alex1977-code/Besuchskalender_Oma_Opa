@@ -30,7 +30,7 @@ Ist `config.js` leer, nutzt die App `server.js` (siehe oben) oder bleibt rein lo
 | 3 | UI: Monatsansicht, große Schrift, farbige Punkte je Person | `index.html` | Claude Sonnet 5.5 |
 | 4 | Besuch anlegen / ändern / löschen | Dialog-Formular | Claude Sonnet 5.5 |
 | 5 | Offline & Installierbarkeit (PWA) | `manifest.webmanifest`, `sw.js` | Claude Sonnet 5.5 |
-| 6 | Sichern / Laden als Datei | JSON-Export/-Import | Claude Sonnet 5.5 |
+| 6 | ~~Sichern / Laden als Datei~~ (entfällt, der Familien-Code genügt) | – | – |
 | 7 | Test im Browser (Anlegen, Ändern, Löschen, Dunkelmodus) | Testprotokoll | Claude Sonnet 5.5 |
 | 8 (optional) | Freundliche Erinnerungstexte / Besuchsideen zur Laufzeit | Kleine API-Funktion | Claude Haiku 4.5 (schnell, günstig) |
 | 9 | Gemeinsamer Kalender für die Familie (Sync) | `server.js` + Familien-Code | – (kein KI-Modell nötig) |

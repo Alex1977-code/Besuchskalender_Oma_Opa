@@ -40,6 +40,8 @@
   .row { display:flex; gap:8px; flex-wrap:wrap; }
   .muted { opacity:.7; font-size:.85rem; }
   dialog { border:0; border-radius:16px; max-width:520px; width:92%; background:var(--card); color:var(--ink); }
+  body.modal-open { overflow:hidden; position:fixed; left:0; right:0; width:100%; }
+  dialog { overscroll-behavior:contain; max-height:90vh; overflow:auto; }
   dialog::backdrop { background:rgba(0,0,0,.5); }
 </style>
 </head>
@@ -64,16 +66,6 @@
   </div>
 
   <div class="card">
-    <h2 style="margin-top:0">Daten</h2>
-    <div class="row">
-      <button id="export">Sichern (Datei)</button>
-      <button id="import">Laden (Datei)</button>
-      <input type="file" id="file" accept="application/json" hidden>
-    </div>
-    <p class="muted">Ohne Familien-Code liegen die Einträge nur auf diesem Gerät.</p>
-  </div>
-
-  <div class="card">
     <h2 style="margin-top:0">Familienkalender</h2>
     <label for="code">Gemeinsamer Familien-Code</label>
     <input id="code" autocomplete="off" placeholder="z. B. sonnenblume-2026 (mind. 6 Zeichen)">
@@ -82,7 +74,7 @@
       <button id="disconnect" hidden>Trennen</button>
     </div>
     <p class="muted" id="syncState">Nicht verbunden.</p>
-    <p class="muted">Alle mit demselben Code sehen und ändern denselben Kalender. Den Code nur in der Familie weitergeben.</p>
+    <p class="muted">Alle mit demselben Code sehen und ändern denselben Kalender. Den Code nur in der Familie weitergeben. Ohne Code liegen die Einträge nur auf diesem Gerät.</p>
   </div>
 </main>
 
@@ -156,8 +148,15 @@ function openDlg(v, date) {
   $('to').value = v ? v.to : '17:00';
   $('note').value = v ? v.note : '';
   $('del').hidden = !v;
+  lockScroll(true);
   $('dlg').showModal();
 }
+let lockY = 0;
+function lockScroll(on) {
+  if (on) { lockY = scrollY; document.body.style.top = -lockY + 'px'; document.body.classList.add('modal-open'); }
+  else if (document.body.classList.contains('modal-open')) { document.body.classList.remove('modal-open'); document.body.style.top = ''; scrollTo(0, lockY); }
+}
+$('dlg').addEventListener('close', () => lockScroll(false));
 
 $('prev').onclick = () => { view.setMonth(view.getMonth()-1); render(); };
 $('next').onclick = () => { view.setMonth(view.getMonth()+1); render(); };
@@ -172,19 +171,6 @@ $('form').addEventListener('submit', e => {
   save(); render(); sync();
 });
 $('del').onclick = () => { visits = visits.map(v => v.id === editId ? {id:v.id, deleted:true, updatedAt:Date.now()} : v); save(); render(); sync(); $('dlg').close(); };
-$('export').onclick = () => {
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([JSON.stringify(visits, null, 2)], {type:'application/json'}));
-  a.download = 'besuchskalender.json'; a.click();
-};
-$('import').onclick = () => $('file').click();
-$('file').onchange = async e => {
-  try {
-    const data = JSON.parse(await e.target.files[0].text());
-    if (Array.isArray(data)) { const t = Date.now(); visits = data.filter(v => v && v.id && v.date && v.who).map(v => ({...v, updatedAt: t})); save(); render(); sync(); }
-  } catch { alert('Datei konnte nicht gelesen werden.'); }
-};
-
 // ---- Familien-Sync ----
 const CODE_KEY = 'besuchskalender.code';
 let code = ''; try { code = localStorage.getItem(CODE_KEY) || ''; } catch {}
