@@ -70,7 +70,19 @@
       <button id="import">Laden (Datei)</button>
       <input type="file" id="file" accept="application/json" hidden>
     </div>
-    <p class="muted">Alle Einträge liegen nur auf diesem Gerät.</p>
+    <p class="muted">Ohne Familien-Code liegen die Einträge nur auf diesem Gerät.</p>
+  </div>
+
+  <div class="card">
+    <h2 style="margin-top:0">Familienkalender</h2>
+    <label for="code">Gemeinsamer Familien-Code</label>
+    <input id="code" autocomplete="off" placeholder="z. B. sonnenblume-2026 (mind. 6 Zeichen)">
+    <div class="row" style="margin-top:10px">
+      <button class="primary" id="connect">Verbinden</button>
+      <button id="disconnect" hidden>Trennen</button>
+    </div>
+    <p class="muted" id="syncState">Nicht verbunden.</p>
+    <p class="muted">Alle mit demselben Code sehen und ändern denselben Kalender. Den Code nur in der Familie weitergeben.</p>
   </div>
 </main>
 
@@ -102,7 +114,8 @@ let visits = load();
 let view = new Date(); view.setDate(1);
 let editId = null;
 
-function load() { try { return JSON.parse(localStorage.getItem(KEY)) || []; } catch { return []; } }
+function load() { try { return (JSON.parse(localStorage.getItem(KEY)) || []).map(v => ({ updatedAt: 0, ...v })); } catch { return []; } }
+const live = () => visits.filter(v => !v.deleted);
 function save() { try { localStorage.setItem(KEY, JSON.stringify(visits)); } catch {} }
 const $ = id => document.getElementById(id);
 const iso = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
@@ -118,13 +131,13 @@ function render() {
   let html = '';
   for (let i = 0; i < 42; i++) {
     const d = new Date(start); d.setDate(start.getDate() + i);
-    const key = iso(d), vs = visits.filter(v => v.date === key);
+    const key = iso(d), vs = live().filter(v => v.date === key);
     html += `<button class="day ${d.getMonth()!==view.getMonth()?'other':''} ${key===todayIso?'today':''}" data-date="${key}">
       <span class="n">${d.getDate()}</span><br>${vs.map(v=>`<span class="dot" style="background:${colorFor(v.who)}" title="${esc(v.who)}"></span>`).join('')}</button>`;
   }
   $('days').innerHTML = html;
 
-  const up = visits.filter(v => v.date >= todayIso).sort((a,b) => (a.date+a.from).localeCompare(b.date+b.from)).slice(0, 8);
+  const up = live().filter(v => v.date >= todayIso).sort((a,b) => (a.date+a.from).localeCompare(b.date+b.from)).slice(0, 8);
   $('upcoming').innerHTML = up.map(v => `<div class="visit" data-id="${v.id}">
       <div><strong>${esc(v.who)}</strong><br>${fmt(v)}${v.from ? `, ${v.from}${v.to?'–'+v.to:''} Uhr`:''}
       ${v.note?`<br><span class="muted">${esc(v.note)}</span>`:''}</div>
@@ -153,11 +166,11 @@ $('upcoming').onclick = e => { const b = e.target.closest('[data-edit]'); if (b)
 $('form').addEventListener('submit', e => {
   if (e.submitter?.value !== 'save') return;
   const v = { id: editId || crypto.randomUUID(), who: $('who').value.trim(), date: $('date').value,
-              from: $('from').value, to: $('to').value, note: $('note').value.trim() };
+              from: $('from').value, to: $('to').value, note: $('note').value.trim(), updatedAt: Date.now() };
   visits = editId ? visits.map(x => x.id === editId ? v : x) : [...visits, v];
-  save(); render();
+  save(); render(); sync();
 });
-$('del').onclick = () => { visits = visits.filter(v => v.id !== editId); save(); render(); $('dlg').close(); };
+$('del').onclick = () => { visits = visits.map(v => v.id === editId ? {id:v.id, deleted:true, updatedAt:Date.now()} : v); save(); render(); sync(); $('dlg').close(); };
 $('export').onclick = () => {
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([JSON.stringify(visits, null, 2)], {type:'application/json'}));
@@ -167,9 +180,56 @@ $('import').onclick = () => $('file').click();
 $('file').onchange = async e => {
   try {
     const data = JSON.parse(await e.target.files[0].text());
-    if (Array.isArray(data)) { visits = data; save(); render(); }
+    if (Array.isArray(data)) { const t = Date.now(); visits = data.filter(v => v && v.id && v.date && v.who).map(v => ({...v, updatedAt: t})); save(); render(); sync(); }
   } catch { alert('Datei konnte nicht gelesen werden.'); }
 };
+
+// ---- Familien-Sync ----
+const CODE_KEY = 'besuchskalender.code';
+let code = ''; try { code = localStorage.getItem(CODE_KEY) || ''; } catch {}
+let syncing = false, again = false;
+function setState(t) { $('syncState').textContent = t; }
+function updateSyncUi() {
+  $('code').value = code; $('code').disabled = !!code;
+  $('connect').hidden = !!code; $('disconnect').hidden = !code;
+  if (!code) setState('Nicht verbunden.');
+}
+async function sync() {
+  if (!code) return;
+  if (syncing) { again = true; return; }
+  syncing = true;
+  try {
+    const r = await fetch('/api/sync', { method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Family-Code': code },
+      body: JSON.stringify({ visits }) });
+    if (!r.ok) throw new Error(r.status === 400 ? 'Code ungültig' : 'Serverfehler ' + r.status);
+    const data = await r.json();
+    const m = new Map();
+    for (const v of [...data.visits, ...visits]) if (!m.has(v.id) || m.get(v.id).updatedAt < v.updatedAt) m.set(v.id, v);
+    visits = [...m.values()]; save(); render();
+    setState('Verbunden – zuletzt abgeglichen um ' + new Date().toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'}));
+  } catch (e) {
+    setState('Offline oder nicht erreichbar – wird später abgeglichen. (' + e.message + ')');
+  } finally {
+    syncing = false;
+    if (again) { again = false; sync(); }
+  }
+}
+$('connect').onclick = () => {
+  const c = $('code').value.trim();
+  if (c.length < 6) { setState('Der Code braucht mindestens 6 Zeichen.'); return; }
+  code = c; try { localStorage.setItem(CODE_KEY, code); } catch {}
+  updateSyncUi(); sync();
+};
+$('disconnect').onclick = () => {
+  code = ''; try { localStorage.removeItem(CODE_KEY); } catch {}
+  updateSyncUi();
+};
+setInterval(sync, 15000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) sync(); });
+addEventListener('online', sync);
+updateSyncUi(); sync();
+
 render();
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 </script>

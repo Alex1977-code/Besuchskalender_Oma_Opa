@@ -1,7 +1,15 @@
 # Besuchskalender Oma & Opa
 
 Offline-fähige Web-App (PWA): Familie trägt Besuche ein, Oma & Opa sehen auf einen Blick, wer wann kommt.
-Öffnen: `index.html` im Browser (oder per Webserver, dann "Zum Startbildschirm hinzufügen").
+Start: `node server.js` (keine Abhängigkeiten, Node 18+), dann `http://localhost:8080` öffnen.
+Optional: `PORT` und `DATA_DIR` als Umgebungsvariablen. Ohne Server läuft `index.html` weiterhin rein lokal.
+
+## Familienkalender
+Alle Familienmitglieder geben in der App denselben **Familien-Code** ein (mind. 6 Zeichen) und sehen denselben Kalender.
+- Der Server speichert pro Code eine JSON-Datei in `data/` (Dateiname = SHA-256 des Codes).
+- Abgleich beim Start, nach jeder Änderung und alle 15 s; Änderungen offline werden nachgeholt.
+- Konflikte: Der zuletzt geänderte Eintrag gewinnt; Löschungen werden mit abgeglichen.
+- Der Code ist das einzige „Passwort“: lang und nur in der Familie teilen; für den Betrieb im Internet HTTPS davorschalten.
 
 ## Plan
 
@@ -15,6 +23,6 @@ Offline-fähige Web-App (PWA): Familie trägt Besuche ein, Oma & Opa sehen auf e
 | 6 | Sichern / Laden als Datei | JSON-Export/-Import | Claude Sonnet 5.5 |
 | 7 | Test im Browser (Anlegen, Ändern, Löschen, Dunkelmodus) | Testprotokoll | Claude Sonnet 5.5 |
 | 8 (optional) | Freundliche Erinnerungstexte / Besuchsideen zur Laufzeit | Kleine API-Funktion | Claude Haiku 4.5 (schnell, günstig) |
-| 9 (optional) | Gemeinsamer Kalender für die Familie (Sync) | Backend/DB | – (kein KI-Modell nötig) |
+| 9 | Gemeinsamer Kalender für die Familie (Sync) | `server.js` + Familien-Code | – (kein KI-Modell nötig) |
 
 Die App selbst benötigt **keine** KI zum Laufen; Modelle kommen nur bei Entwicklung (Sonnet 5.5) und der optionalen Textfunktion (Haiku 4.5) zum Einsatz.
