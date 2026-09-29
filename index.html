@@ -3,95 +3,141 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#2f6f4f">
+<meta name="theme-color" content="#1f6f54">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E%F0%9F%91%B5%3C/text%3E%3C/svg%3E">
 <link rel="manifest" href="manifest.webmanifest">
 <title>Besuchskalender Oma &amp; Opa</title>
 <style>
-  :root { --bg:#fbf7ef; --card:#fff; --ink:#22303a; --accent:#2f6f4f; --warm:#e8a33d; --line:#e3dccd; }
-  @media (prefers-color-scheme: dark) {
-    :root { --bg:#1b2227; --card:#26313a; --ink:#f1ece0; --accent:#6cc39a; --warm:#e8a33d; --line:#3a4853; }
+  :root {
+    --bg:#f4f6f5; --surface:#ffffff; --ink:#1c2b26; --muted:#5f6f68; --line:#e2e8e5;
+    --accent:#1f6f54; --accent-ink:#ffffff; --accent-soft:#e3f1ea; --danger:#b3382c;
+    --shadow:0 1px 2px rgba(20,40,32,.06), 0 4px 16px rgba(20,40,32,.06);
   }
-  * { box-sizing: border-box; }
-  body { margin:0; font: 20px/1.4 system-ui, sans-serif; background:var(--bg); color:var(--ink); }
-  header { background:var(--accent); color:#fff; padding:16px; text-align:center; }
-  header h1 { margin:0; font-size:1.4rem; }
-  main { max-width:720px; margin:0 auto; padding:16px; }
-  .nav { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
-  button { font:inherit; padding:12px 18px; border-radius:12px; border:2px solid var(--accent);
-           background:var(--card); color:var(--ink); cursor:pointer; }
-  button.primary { background:var(--accent); color:#fff; }
-  button.danger { border-color:#b3402f; color:#b3402f; }
-  .grid { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; }
-  .dow { text-align:center; font-weight:600; font-size:.8rem; opacity:.7; }
-  .day { min-height:56px; background:var(--card); border:1px solid var(--line); border-radius:10px;
-         padding:4px; text-align:left; position:relative; }
-  .day.other { opacity:.35; }
-  .day.today { outline:3px solid var(--warm); }
-  .day .n { font-size:.9rem; }
-  .dot { display:inline-block; width:12px; height:12px; border-radius:50%; margin:2px 2px 0 0; }
-  .card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px; margin:12px 0; }
-  .visit { display:flex; justify-content:space-between; gap:8px; align-items:center;
-           border-bottom:1px solid var(--line); padding:10px 0; }
-  .visit:last-child { border:0; }
-  label { display:block; margin:10px 0 2px; font-weight:600; }
-  input, select, textarea { width:100%; font:inherit; padding:10px; border-radius:10px;
-        border:2px solid var(--line); background:var(--bg); color:var(--ink); }
-  .row { display:flex; gap:8px; flex-wrap:wrap; }
-  .muted { opacity:.7; font-size:.85rem; }
-  dialog { border:0; border-radius:16px; max-width:520px; width:92%; background:var(--card); color:var(--ink); }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg:#121917; --surface:#1b2521; --ink:#eef3f0; --muted:#9db0a7; --line:#2b3833;
+      --accent:#5fc49c; --accent-ink:#0c1a15; --accent-soft:#1d3329; --danger:#f08a7e;
+      --shadow:0 1px 2px rgba(0,0,0,.3), 0 4px 16px rgba(0,0,0,.25);
+    }
+  }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body { margin:0; font:18px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; background:var(--bg); color:var(--ink); }
+  header { background:var(--surface); border-bottom:1px solid var(--line); }
+  .bar { max-width:720px; margin:0 auto; padding:14px 16px; display:flex; align-items:center; justify-content:space-between; gap:12px; }
+  header h1 { margin:0; font-size:1.15rem; font-weight:700; letter-spacing:-.01em; }
+  main { max-width:720px; margin:0 auto; padding:16px 16px 40px; }
+  h2 { margin:0; font-size:1.05rem; font-weight:700; }
+  button { font:inherit; font-weight:600; min-height:46px; padding:0 20px; border-radius:12px; border:1px solid var(--line);
+           background:var(--surface); color:var(--ink); cursor:pointer; transition:background .15s, transform .05s; }
+  button:hover { background:var(--accent-soft); }
+  button:active { transform:scale(.98); }
+  button:focus-visible, input:focus-visible, textarea:focus-visible, summary:focus-visible { outline:3px solid var(--accent); outline-offset:2px; }
+  button.primary { background:var(--accent); border-color:var(--accent); color:var(--accent-ink); }
+  button.primary:hover { filter:brightness(1.08); }
+  button.danger { color:var(--danger); border-color:transparent; background:transparent; }
+  button { white-space:nowrap; }
+  .visit button { min-height:40px; padding:0 14px; font-size:.95rem; font-weight:600; }
+  .head button { padding:0 16px; }
+  button.icon { width:46px; padding:0; font-size:1.1rem; }
+  .card { background:var(--surface); border:1px solid var(--line); border-radius:18px; box-shadow:var(--shadow); padding:18px; margin:16px 0; }
+  .nav { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+  .nav strong { font-size:1.2rem; text-transform:capitalize; letter-spacing:-.01em; }
+  .grid { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:4px; }
+  .dow { text-align:center; font-weight:600; font-size:.78rem; color:var(--muted); padding:4px 0 6px; text-transform:uppercase; letter-spacing:.04em; }
+  .day { min-height:58px; padding:6px 2px 4px; border-radius:12px; border:0; background:transparent; font-weight:500;
+         display:flex; flex-direction:column; align-items:center; gap:4px; }
+  .day:hover { background:var(--accent-soft); }
+  .day.other { color:var(--muted); opacity:.45; }
+  .day .n { width:32px; height:32px; line-height:32px; border-radius:50%; font-size:1rem; }
+  .day.today .n { background:var(--accent); color:var(--accent-ink); font-weight:700; }
+  .dots { display:flex; gap:3px; flex-wrap:wrap; justify-content:center; min-height:9px; }
+  .dot { width:9px; height:9px; border-radius:50%; }
+  .head { flex-wrap:wrap; display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:6px; }
+  .visit { display:flex; align-items:center; gap:12px; padding:14px 0; border-top:1px solid var(--line); }
+  .visit:first-of-type { border-top:0; }
+  .badge { flex:none; width:54px; text-align:center; border-radius:12px; padding:6px 0; background:var(--accent-soft); }
+  .badge b { display:block; font-size:1.25rem; line-height:1.1; }
+  .badge span { font-size:.72rem; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); font-weight:600; }
+  .visit .info { flex:1; min-width:0; }
+  .visit .who { font-weight:700; display:flex; align-items:baseline; gap:8px; overflow-wrap:anywhere; }
+  .visit .who .dot { flex:none; }
+  .visit .when { color:var(--muted); font-size:.92rem; }
+  .visit .note { font-size:.92rem; margin-top:2px; overflow-wrap:anywhere; }
+  .empty { color:var(--muted); text-align:center; padding:18px 0 6px; margin:0; }
+  .muted { color:var(--muted); font-size:.9rem; }
+  details summary { cursor:pointer; font-weight:700; list-style:none; display:flex; justify-content:space-between; align-items:center; min-height:32px; }
+  details summary::-webkit-details-marker { display:none; }
+  details summary::after { content:"›"; font-size:1.5rem; transform:rotate(90deg); transition:transform .2s; color:var(--muted); }
+  details[open] summary::after { transform:rotate(-90deg); }
+  .pill { font-size:.8rem; font-weight:600; padding:3px 10px; border-radius:99px; background:var(--accent-soft); color:var(--accent); margin-left:8px; }
+  .pill.off { background:var(--line); color:var(--muted); }
+  label { display:block; margin:14px 0 6px; font-weight:600; font-size:.95rem; }
+  input, textarea { width:100%; font:inherit; padding:12px 14px; border-radius:12px; border:1px solid var(--line);
+                    background:var(--bg); color:var(--ink); min-height:48px; }
+  textarea { resize:vertical; }
+  input:disabled { opacity:.7; }
+  .row { display:flex; gap:10px; flex-wrap:wrap; }
+  .row > * { flex:1; }
+  dialog { border:0; border-radius:22px; max-width:480px; width:calc(100% - 24px); padding:22px; background:var(--surface); color:var(--ink);
+           box-shadow:0 20px 60px rgba(0,0,0,.35); overscroll-behavior:contain; max-height:90vh; overflow:auto; }
+  dialog::backdrop { background:rgba(10,20,16,.55); backdrop-filter:blur(2px); }
+  dialog h2 { font-size:1.25rem; margin-bottom:4px; }
+  .actions { display:flex; gap:10px; margin-top:22px; flex-wrap:wrap; }
+  .actions .primary { flex:1; }
   body.modal-open { overflow:hidden; position:fixed; left:0; right:0; width:100%; }
-  dialog { overscroll-behavior:contain; max-height:90vh; overflow:auto; }
-  dialog::backdrop { background:rgba(0,0,0,.5); }
 </style>
 </head>
 <body>
-<header><h1>👵👴 Besuchskalender Oma &amp; Opa</h1></header>
+<header><div class="bar"><h1>Besuchskalender · Oma &amp; Opa</h1></div></header>
 <main>
-  <div class="nav">
-    <button id="prev" aria-label="Vorheriger Monat">◀</button>
-    <strong id="monthLabel"></strong>
-    <button id="next" aria-label="Nächster Monat">▶</button>
-  </div>
-  <div class="grid" id="dows"></div>
-  <div class="grid" id="days"></div>
+  <section class="card" aria-label="Kalender">
+    <div class="nav">
+      <button class="icon" id="prev" aria-label="Vorheriger Monat">‹</button>
+      <strong id="monthLabel"></strong>
+      <button class="icon" id="next" aria-label="Nächster Monat">›</button>
+    </div>
+    <div class="grid" id="dows"></div>
+    <div class="grid" id="days"></div>
+  </section>
 
-  <div class="card">
-    <div class="row" style="justify-content:space-between;align-items:center">
-      <h2 style="margin:0">Nächste Besuche</h2>
-      <button class="primary" id="add">＋ Besuch eintragen</button>
+  <section class="card" aria-label="Nächste Besuche">
+    <div class="head">
+      <h2>Nächste Besuche</h2>
+      <button class="primary" id="add">+ Eintragen</button>
     </div>
     <div id="upcoming"></div>
-    <p class="muted" id="hint"></p>
-  </div>
+    <p class="empty" id="hint"></p>
+  </section>
 
-  <div class="card">
-    <h2 style="margin-top:0">Familienkalender</h2>
-    <label for="code">Gemeinsamer Familien-Code</label>
-    <input id="code" autocomplete="off" placeholder="z. B. sonnenblume-2026 (mind. 6 Zeichen)">
-    <div class="row" style="margin-top:10px">
-      <button class="primary" id="connect">Verbinden</button>
-      <button id="disconnect" hidden>Trennen</button>
-    </div>
-    <p class="muted" id="syncState">Nicht verbunden.</p>
-    <p class="muted">Alle mit demselben Code sehen und ändern denselben Kalender. Den Code nur in der Familie weitergeben. Ohne Code liegen die Einträge nur auf diesem Gerät.</p>
-  </div>
+  <section class="card">
+    <details id="family">
+      <summary><span>Familienkalender<span class="pill off" id="pill">Aus</span></span></summary>
+      <label for="code">Familien-Code</label>
+      <input id="code" autocomplete="off" autocapitalize="off" spellcheck="false">
+      <div class="row" style="margin-top:12px">
+        <button class="primary" id="connect">Verbinden</button>
+        <button id="disconnect" hidden>Trennen</button>
+      </div>
+      <p class="muted" id="syncState">Nicht verbunden.</p>
+      <p class="muted">Alle mit demselben Code (mindestens 6 Zeichen) sehen und ändern denselben Kalender. Den Code nur in der Familie weitergeben. Ohne Code liegen die Einträge nur auf diesem Gerät.</p>
+    </details>
+  </section>
 </main>
 
 <dialog id="dlg">
   <form method="dialog" id="form">
-    <h2 id="dlgTitle" style="margin-top:0">Besuch</h2>
+    <h2 id="dlgTitle">Besuch</h2>
     <label for="who">Wer kommt?</label>
-    <input id="who" required placeholder="z. B. Lena &amp; Tom">
+    <input id="who" required>
     <label for="date">Datum</label>
     <input id="date" type="date" required>
     <div class="row">
-      <div style="flex:1"><label for="from">Von</label><input id="from" type="time" value="15:00"></div>
-      <div style="flex:1"><label for="to">Bis</label><input id="to" type="time" value="17:00"></div>
+      <div><label for="from">Von</label><input id="from" type="time" value="15:00"></div>
+      <div><label for="to">Bis</label><input id="to" type="time" value="17:00"></div>
     </div>
     <label for="note">Notiz (optional)</label>
-    <textarea id="note" rows="2" placeholder="z. B. Bringe Kuchen mit"></textarea>
-    <div class="row" style="margin-top:16px">
+    <textarea id="note" rows="2"></textarea>
+    <div class="actions">
       <button class="primary" value="save" id="save">Speichern</button>
       <button value="cancel" formnovalidate>Abbrechen</button>
       <button type="button" class="danger" id="del" hidden>Löschen</button>
@@ -102,7 +148,7 @@
 <script src="config.js"></script>
 <script>
 const KEY = 'besuchskalender.v1';
-const COLORS = ['#2f6f4f','#e8a33d','#3b78c2','#b3402f','#8a5cc2','#1f9aa8'];
+const COLORS = ['#1f6f54','#d98a1f','#2f6fc0','#c0392b','#7e57c2','#178a99'];
 let visits = load();
 let view = new Date(); view.setDate(1);
 let editId = null;
@@ -113,7 +159,6 @@ function save() { try { localStorage.setItem(KEY, JSON.stringify(visits)); } cat
 const $ = id => document.getElementById(id);
 const iso = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 const colorFor = who => { let h = 0; for (const c of who) h = (h*31 + c.charCodeAt(0)) >>> 0; return COLORS[h % COLORS.length]; };
-const fmt = v => new Date(v.date + 'T00:00').toLocaleDateString('de-DE', {weekday:'long', day:'numeric', month:'long'});
 
 function render() {
   $('monthLabel').textContent = view.toLocaleDateString('de-DE', {month:'long', year:'numeric'});
@@ -125,17 +170,21 @@ function render() {
   for (let i = 0; i < 42; i++) {
     const d = new Date(start); d.setDate(start.getDate() + i);
     const key = iso(d), vs = live().filter(v => v.date === key);
-    html += `<button class="day ${d.getMonth()!==view.getMonth()?'other':''} ${key===todayIso?'today':''}" data-date="${key}">
-      <span class="n">${d.getDate()}</span><br>${vs.map(v=>`<span class="dot" style="background:${colorFor(v.who)}" title="${esc(v.who)}"></span>`).join('')}</button>`;
+    html += `<button class="day ${d.getMonth()!==view.getMonth()?'other':''} ${key===todayIso?'today':''}" data-date="${key}" aria-label="${d.toLocaleDateString('de-DE',{weekday:'long',day:'numeric',month:'long'})}${vs.length?', '+vs.length+' Besuch(e)':''}">
+      <span class="n">${d.getDate()}</span><span class="dots">${vs.slice(0,4).map(v=>`<span class="dot" style="background:${colorFor(v.who)}"></span>`).join('')}</span></button>`;
   }
   $('days').innerHTML = html;
 
   const up = live().filter(v => v.date >= todayIso).sort((a,b) => (a.date+a.from).localeCompare(b.date+b.from)).slice(0, 8);
-  $('upcoming').innerHTML = up.map(v => `<div class="visit" data-id="${v.id}">
-      <div><strong>${esc(v.who)}</strong><br>${fmt(v)}${v.from ? `, ${v.from}${v.to?'–'+v.to:''} Uhr`:''}
-      ${v.note?`<br><span class="muted">${esc(v.note)}</span>`:''}</div>
-      <button data-edit="${v.id}">Ändern</button></div>`).join('');
+  $('upcoming').innerHTML = up.map(v => {
+    const d = new Date(v.date + 'T00:00');
+    return `<div class="visit"><div class="badge"><b>${d.getDate()}</b><span>${d.toLocaleDateString('de-DE',{month:'short'}).replace('.','')}</span></div>
+      <div class="info"><div class="who"><span class="dot" style="background:${colorFor(v.who)}"></span>${esc(v.who)}</div>
+      <div class="when">${d.toLocaleDateString('de-DE',{weekday:'long'})}${v.from ? `, ${v.from}${v.to?'–'+v.to:''} Uhr`:''}</div>
+      ${v.note?`<div class="note">${esc(v.note)}</div>`:''}</div>
+      <button data-edit="${v.id}">Ändern</button></div>`; }).join('');
   $('hint').textContent = up.length ? '' : 'Noch keine Besuche geplant.';
+  $('hint').hidden = up.length > 0;
 }
 function esc(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
@@ -179,6 +228,7 @@ function setState(t) { $('syncState').textContent = t; }
 function updateSyncUi() {
   $('code').value = code; $('code').disabled = !!code;
   $('connect').hidden = !!code; $('disconnect').hidden = !code;
+  $('pill').textContent = code ? 'An' : 'Aus'; $('pill').classList.toggle('off', !code);
   if (!code) setState('Nicht verbunden.');
 }
 async function sync() {
@@ -221,6 +271,7 @@ $('disconnect').onclick = () => {
 setInterval(sync, 15000);
 document.addEventListener('visibilitychange', () => { if (!document.hidden) sync(); });
 addEventListener('online', sync);
+$('family').open = !code;
 updateSyncUi(); sync();
 
 render();

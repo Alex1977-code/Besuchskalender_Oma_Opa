@@ -1,4 +1,4 @@
-const CACHE = 'besuchskalender-v3';
+const CACHE = 'besuchskalender-v4';
 const FILES = ['./', './index.html', './manifest.webmanifest', './config.js'];
 self.addEventListener('install', e => e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES))));
 self.addEventListener('activate', e => e.waitUntil(
