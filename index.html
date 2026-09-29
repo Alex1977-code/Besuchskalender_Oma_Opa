@@ -116,10 +116,11 @@
       <input id="code" autocomplete="off" autocapitalize="off" spellcheck="false">
       <div class="row" style="margin-top:12px">
         <button class="primary" id="connect">Verbinden</button>
+        <button class="primary" id="share" hidden>Link teilen</button>
         <button id="disconnect" hidden>Trennen</button>
       </div>
       <p class="muted" id="syncState">Nicht verbunden.</p>
-      <p class="muted">Alle mit demselben Code (mindestens 6 Zeichen) sehen und ändern denselben Kalender. Den Code nur in der Familie weitergeben. Ohne Code liegen die Einträge nur auf diesem Gerät.</p>
+      <p class="muted">Alle mit demselben Code (mindestens 6 Zeichen) sehen und ändern denselben Kalender. Der geteilte Link enthält den Code: nur an Familienmitglieder schicken. Ohne Code liegen die Einträge nur auf diesem Gerät.</p>
     </details>
   </section>
 </main>
@@ -223,11 +224,21 @@ $('del').onclick = () => { visits = visits.map(v => v.id === editId ? {id:v.id, 
 // ---- Familien-Sync ----
 const CODE_KEY = 'besuchskalender.code';
 let code = ''; try { code = localStorage.getItem(CODE_KEY) || ''; } catch {}
+// Einladungslink: https://…/#code=DEIN-CODE verbindet automatisch (der Teil hinter # geht nie an einen Server)
+(function () {
+  const m = location.hash.match(/^#code=(.+)$/);
+  if (!m) return;
+  let c = ''; try { c = decodeURIComponent(m[1]).trim(); } catch {}
+  history.replaceState(null, '', location.pathname + location.search);
+  if (c.length < 6 || c.length > 100 || c === code) return;
+  if (code && !confirm('Diesen Familienkalender statt des bisherigen verbinden?')) return;
+  code = c; try { localStorage.setItem(CODE_KEY, code); } catch {}
+})();
 let syncing = false, again = false;
 function setState(t) { $('syncState').textContent = t; }
 function updateSyncUi() {
   $('code').value = code; $('code').disabled = !!code;
-  $('connect').hidden = !!code; $('disconnect').hidden = !code;
+  $('connect').hidden = !!code; $('disconnect').hidden = !code; $('share').hidden = !code;
   $('pill').textContent = code ? 'An' : 'Aus'; $('pill').classList.toggle('off', !code);
   if (!code) setState('Nicht verbunden.');
 }
@@ -263,6 +274,14 @@ $('connect').onclick = () => {
   if (c.length < 6) { setState('Der Code braucht mindestens 6 Zeichen.'); return; }
   code = c; try { localStorage.setItem(CODE_KEY, code); } catch {}
   updateSyncUi(); sync();
+};
+$('share').onclick = async () => {
+  const url = location.origin + location.pathname + '#code=' + encodeURIComponent(code);
+  try {
+    if (navigator.share) { await navigator.share({ title: 'Besuchskalender Oma & Opa', text: 'Hier ist unser Besuchskalender:', url }); return; }
+  } catch (e) { if (e.name === 'AbortError') return; }
+  try { await navigator.clipboard.writeText(url); setState('Link kopiert – jetzt in WhatsApp o. Ä. einfügen.'); }
+  catch { prompt('Diesen Link kopieren und verschicken:', url); }
 };
 $('disconnect').onclick = () => {
   code = ''; try { localStorage.removeItem(CODE_KEY); } catch {}
