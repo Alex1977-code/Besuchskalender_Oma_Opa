@@ -17,7 +17,7 @@ Alle Familienmitglieder geben in der App denselben **Familien-Code** ein (mind. 
 3. **Project Settings → API**: `Project URL` und `anon public` key in `config.js` eintragen.
    (Der anon key ist öffentlich gedacht. Die Tabelle ist gesperrt; Zugriff gibt es nur über die Funktion `sync_visits` mit dem Familien-Code.)
 4. App hosten: GitHub → **Settings → Pages** → Branch wählen, Ordner `/ (root)`. Die Adresse an die Familie schicken.
-5. Alle geben in der App denselben Familien-Code ein.
+5. Alle geben in der App denselben Familien-Code ein, oder du tippst im Bereich „Familienkalender“ auf **Link teilen**: Der Link (`…/#code=CODE`) verbindet jedes Gerät beim Öffnen automatisch. Er enthält den Code, also nur an die Familie schicken.
 
 Ist `config.js` leer, nutzt die App `server.js` (siehe oben) oder bleibt rein lokal.
 
