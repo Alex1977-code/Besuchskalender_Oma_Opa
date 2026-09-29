@@ -1,0 +1,9 @@
+{
+  "name": "Besuchskalender Oma & Opa",
+  "short_name": "Besuche",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#fbf7ef",
+  "theme_color": "#2f6f4f",
+  "lang": "de"
+}

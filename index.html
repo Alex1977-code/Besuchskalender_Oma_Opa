@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#2f6f4f">
+<link rel="manifest" href="manifest.webmanifest">
+<title>Besuchskalender Oma &amp; Opa</title>
+<style>
+  :root { --bg:#fbf7ef; --card:#fff; --ink:#22303a; --accent:#2f6f4f; --warm:#e8a33d; --line:#e3dccd; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#1b2227; --card:#26313a; --ink:#f1ece0; --accent:#6cc39a; --warm:#e8a33d; --line:#3a4853; }
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; font: 20px/1.4 system-ui, sans-serif; background:var(--bg); color:var(--ink); }
+  header { background:var(--accent); color:#fff; padding:16px; text-align:center; }
+  header h1 { margin:0; font-size:1.4rem; }
+  main { max-width:720px; margin:0 auto; padding:16px; }
+  .nav { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+  button { font:inherit; padding:12px 18px; border-radius:12px; border:2px solid var(--accent);
+           background:var(--card); color:var(--ink); cursor:pointer; }
+  button.primary { background:var(--accent); color:#fff; }
+  button.danger { border-color:#b3402f; color:#b3402f; }
+  .grid { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; }
+  .dow { text-align:center; font-weight:600; font-size:.8rem; opacity:.7; }
+  .day { min-height:56px; background:var(--card); border:1px solid var(--line); border-radius:10px;
+         padding:4px; text-align:left; position:relative; }
+  .day.other { opacity:.35; }
+  .day.today { outline:3px solid var(--warm); }
+  .day .n { font-size:.9rem; }
+  .dot { display:inline-block; width:12px; height:12px; border-radius:50%; margin:2px 2px 0 0; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px; margin:12px 0; }
+  .visit { display:flex; justify-content:space-between; gap:8px; align-items:center;
+           border-bottom:1px solid var(--line); padding:10px 0; }
+  .visit:last-child { border:0; }
+  label { display:block; margin:10px 0 4px; font-weight:600; }
+  input, select, textarea { width:100%; font:inherit; padding:10px; border-radius:10px;
+        border:2px solid var(--line); background:var(--bg); color:var(--ink); }
+  .row { display:flex; gap:8px; flex-wrap:wrap; }
+  .muted { opacity:.7; font-size:.85rem; }
+  dialog { border:0; border-radius:16px; max-width:520px; width:92%; background:var(--card); color:var(--ink); }
+  dialog::backdrop { background:rgba(0,0,0,.5); }
+</style>
+</head>
+<body>
+<header><h1>👵👴 Besuchskalender Oma &amp; Opa</h1></header>
+<main>
+  <div class="nav">
+    <button id="prev" aria-label="Vorheriger Monat">◀</button>
+    <strong id="monthLabel"></strong>
+    <button id="next" aria-label="Nächster Monat">▶</button>
+  </div>
+  <div class="grid" id="dows"></div>
+  <div class="grid" id="days"></div>
+
+  <div class="card">
+    <div class="row" style="justify-content:space-between;align-items:center">
+      <h2 style="margin:0">Nächste Besuche</h2>
+      <button class="primary" id="add">＋ Besuch eintragen</button>
+    </div>
+    <div id="upcoming"></div>
+    <p class="muted" id="hint"></p>
+  </div>
+
+  <div class="card">
+    <h2 style="margin-top:0">Daten</h2>
+    <div class="row">
+      <button id="export">Sichern (Datei)</button>
+      <button id="import">Laden (Datei)</button>
+      <input type="file" id="file" accept="application/json" hidden>
+    </div>
+    <p class="muted">Alle Einträge liegen nur auf diesem Gerät.</p>
+  </div>
+</main>
+
+<dialog id="dlg">
+  <form method="dialog" id="form">
+    <h2 id="dlgTitle" style="margin-top:0">Besuch</h2>
+    <label for="who">Wer kommt?</label>
+    <input id="who" required placeholder="z. B. Lena &amp; Tom">
+    <label for="date">Datum</label>
+    <input id="date" type="date" required>
+    <div class="row">
+      <div style="flex:1"><label for="from">Von</label><input id="from" type="time" value="15:00"></div>
+      <div style="flex:1"><label for="to">Bis</label><input id="to" type="time" value="17:00"></div>
+    </div>
+    <label for="note">Notiz (Kuchen mitbringen, Arzt, …)</label>
+    <textarea id="note" rows="2"></textarea>
+    <div class="row" style="margin-top:16px">
+      <button class="primary" value="save" id="save">Speichern</button>
+      <button value="cancel" formnovalidate>Abbrechen</button>
+      <button type="button" class="danger" id="del" hidden>Löschen</button>
+    </div>
+  </form>
+</dialog>
+
+<script>
+const KEY = 'besuchskalender.v1';
+const COLORS = ['#2f6f4f','#e8a33d','#3b78c2','#b3402f','#8a5cc2','#1f9aa8'];
+let visits = load();
+let view = new Date(); view.setDate(1);
+let editId = null;
+
+function load() { try { return JSON.parse(localStorage.getItem(KEY)) || []; } catch { return []; } }
+function save() { try { localStorage.setItem(KEY, JSON.stringify(visits)); } catch {} }
+const $ = id => document.getElementById(id);
+const iso = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const colorFor = who => { let h = 0; for (const c of who) h = (h*31 + c.charCodeAt(0)) >>> 0; return COLORS[h % COLORS.length]; };
+const fmt = v => new Date(v.date + 'T00:00').toLocaleDateString('de-DE', {weekday:'long', day:'numeric', month:'long'});
+
+function render() {
+  $('monthLabel').textContent = view.toLocaleDateString('de-DE', {month:'long', year:'numeric'});
+  $('dows').innerHTML = ['Mo','Di','Mi','Do','Fr','Sa','So'].map(d => `<div class="dow">${d}</div>`).join('');
+  const first = new Date(view), offset = (first.getDay() + 6) % 7;
+  const start = new Date(first); start.setDate(1 - offset);
+  const todayIso = iso(new Date());
+  let html = '';
+  for (let i = 0; i < 42; i++) {
+    const d = new Date(start); d.setDate(start.getDate() + i);
+    const key = iso(d), vs = visits.filter(v => v.date === key);
+    html += `<button class="day ${d.getMonth()!==view.getMonth()?'other':''} ${key===todayIso?'today':''}" data-date="${key}">
+      <span class="n">${d.getDate()}</span><br>${vs.map(v=>`<span class="dot" style="background:${colorFor(v.who)}" title="${esc(v.who)}"></span>`).join('')}</button>`;
+  }
+  $('days').innerHTML = html;
+
+  const up = visits.filter(v => v.date >= todayIso).sort((a,b) => (a.date+a.from).localeCompare(b.date+b.from)).slice(0, 8);
+  $('upcoming').innerHTML = up.map(v => `<div class="visit" data-id="${v.id}">
+      <div><strong>${esc(v.who)}</strong><br>${fmt(v)}${v.from ? `, ${v.from}${v.to?'–'+v.to:''} Uhr`:''}
+      ${v.note?`<br><span class="muted">${esc(v.note)}</span>`:''}</div>
+      <button data-edit="${v.id}">Ändern</button></div>`).join('');
+  $('hint').textContent = up.length ? '' : 'Noch keine Besuche geplant.';
+}
+function esc(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+function openDlg(v, date) {
+  editId = v ? v.id : null;
+  $('dlgTitle').textContent = v ? 'Besuch ändern' : 'Neuer Besuch';
+  $('who').value = v ? v.who : '';
+  $('date').value = v ? v.date : (date || iso(new Date()));
+  $('from').value = v ? v.from : '15:00';
+  $('to').value = v ? v.to : '17:00';
+  $('note').value = v ? v.note : '';
+  $('del').hidden = !v;
+  $('dlg').showModal();
+}
+
+$('prev').onclick = () => { view.setMonth(view.getMonth()-1); render(); };
+$('next').onclick = () => { view.setMonth(view.getMonth()+1); render(); };
+$('add').onclick = () => openDlg();
+$('days').onclick = e => { const b = e.target.closest('.day'); if (b) openDlg(null, b.dataset.date); };
+$('upcoming').onclick = e => { const b = e.target.closest('[data-edit]'); if (b) openDlg(visits.find(v => v.id === b.dataset.edit)); };
+$('form').addEventListener('submit', e => {
+  if (e.submitter?.value !== 'save') return;
+  const v = { id: editId || crypto.randomUUID(), who: $('who').value.trim(), date: $('date').value,
+              from: $('from').value, to: $('to').value, note: $('note').value.trim() };
+  visits = editId ? visits.map(x => x.id === editId ? v : x) : [...visits, v];
+  save(); render();
+});
+$('del').onclick = () => { visits = visits.filter(v => v.id !== editId); save(); render(); $('dlg').close(); };
+$('export').onclick = () => {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(visits, null, 2)], {type:'application/json'}));
+  a.download = 'besuchskalender.json'; a.click();
+};
+$('import').onclick = () => $('file').click();
+$('file').onchange = async e => {
+  try {
+    const data = JSON.parse(await e.target.files[0].text());
+    if (Array.isArray(data)) { visits = data; save(); render(); }
+  } catch { alert('Datei konnte nicht gelesen werden.'); }
+};
+render();
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+</script>
+</body>
+</html>
