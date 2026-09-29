@@ -35,7 +35,6 @@
            border-bottom:1px solid var(--line); padding:10px 0; }
   .visit:last-child { border:0; }
   label { display:block; margin:10px 0 2px; font-weight:600; }
-  .hint { margin-bottom:4px; }
   input, select, textarea { width:100%; font:inherit; padding:10px; border-radius:10px;
         border:2px solid var(--line); background:var(--bg); color:var(--ink); }
   .row { display:flex; gap:8px; flex-wrap:wrap; }
@@ -83,7 +82,6 @@
   <form method="dialog" id="form">
     <h2 id="dlgTitle" style="margin-top:0">Besuch</h2>
     <label for="who">Wer kommt?</label>
-    <div class="muted hint">Name oder Namen der Person(en), die zu Besuch kommen.</div>
     <input id="who" required placeholder="z. B. Lena &amp; Tom">
     <label for="date">Datum</label>
     <input id="date" type="date" required>
@@ -92,7 +90,6 @@
       <div style="flex:1"><label for="to">Bis</label><input id="to" type="time" value="17:00"></div>
     </div>
     <label for="note">Notiz (optional)</label>
-    <div class="muted hint">Alles, was Oma und Opa wissen sollten, z. B. Kuchen mitbringen, gemeinsam zum Arzt, Spaziergang.</div>
     <textarea id="note" rows="2" placeholder="z. B. Bringe Kuchen mit"></textarea>
     <div class="row" style="margin-top:16px">
       <button class="primary" value="save" id="save">Speichern</button>
